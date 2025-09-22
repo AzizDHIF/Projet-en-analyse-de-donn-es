@@ -1,0 +1,498 @@
+---
+title: "Projet_analyse_de_données"
+author: "Aziz_DHIF"
+date: "2024-12-29"
+output: html_document
+---
+```{r}
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Notre sujet d'étude est l'obésité en tunisie
+ Nous avons 3 blocs , le premier bloc concerne l'hygiène de vie (question 1 à 10), le deuxième bloc concerne l'alimentation (question 1 à 10), le troisième blocs avec des questions oui ou non(question 1 à 11) et le dernier bloc sont quatres questions qui concernent le sexe, l'age  , le poids et la taille  
+
+## 1)Téléchargement et Description des données:
+
+```{r}
+#préparation  des données
+
+data=read.csv("C:\\Users\\Aziz Dhif\\Documents\\projet analyse de donnée.csv",header=TRUE,sep=",")
+
+```
+
+
+```{r}
+names(data) # visualisations des noms des colonnes
+data=data[,-1]#on enleve la premiere colonne qui correspond à la date à laquelle l'inividu a remplit le formulaire
+head(data)
+```
+
+
+```{r}
+names(data)=c("sport","aliment","sommeil","stress","fumer","alcool","santé","Smentale","bouger","peser","fg","proteine","sucre","complet","hydrater","grignS","fastF","informéA","grignR","stressF","Tg","OE","OV","Tc","allergie","Mchron","SSPORT","FSpoids","fumez","alcool","surpoids","sexe","age","poids","taille")#on renomme les colonnes  pour rendre les cartes factorieles plus visibles
+names(data)
+```
+
+
+```{r}
+head(data)
+```
+
+
+```{r}
+summary(data)
+
+
+```
+
+## 2)ACP sur le bloc hygiène de vie
+## 2)1)Intêret de l'Acp:
+Etude des individus  : deux individus sont proches s’ils ont des hygiènes de vie similaires. On s’intéresse à la variabilité entre individus. Y a-t-il des similarités entre les individus pour toutes les variables ? Peut-on établir des profils d’individu ? Peut-on opposer un groupe d’individus à un autre ?
+
+
+Etude des variables : on étudie les liaisons linéaires entre les variables. Les objectifs sont de résumer la matrice des corrélations et de chercher des variables synthétiques: peut-on résumer l'hygiène de vie des individus  par un petit nombre de variables ?
+
+
+
+Lien entre les deux études : peut-on caractériser des groupes d’individus par des variables ?
+
+## 2)2)Pertinence de l'acp
+```{r}
+
+library(corrplot)
+X=as.matrix(data[,c(1:10)])
+M<-cor(X)
+library(RColorBrewer)
+corrplot(M, type="upper", order="hclust", col=brewer.pal(n=8, name="RdBu"))
+
+
+```
+
+les variables sont significativement corrélées , notre ACP est donc pertinente.
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+
+res.pca=PCA(data[,c(1:10,32:35)],ncp = 5,quanti.sup = 12:14,quali.sup=11,graph=F) #sexe, age, poids et taille sont des variables supplémentaires
+
+```
+## 2)3)Choix du nombre d'axe
+```{r}
+head(res.pca$eig)
+```
+```{r}
+fviz_screeplot(res.pca, ncp=10)
+```
+
+
+a) Critère de kaiser : on remarque qu’il y a 3 axes dont les valeurs propres sont supérieures à 1 donc on retient 3 axes d’après ce critère.
+
+b) Critère du taux d’inertie cumulée : On remarque que le taux d’inertie cumulé des 2 premiers axes est de 57.4% qui est un taux important compte tenu du fait que nous avons 10 variables : on va donc, d’après ce critère, retenir les 2 premiers axes.
+
+c) Critère du coude : On remarque que le coude se trouve au niveau du deuxième axe (voir la figure Scree plot), d’après ce critère, on devrait retenir les 2 premiers axes.
+
+Conclusion:En faisant une sorte de vote des 3 critères on devrait retenir les 2 premiers axes.
+
+## 2)4)Interprétation de la carte des variables
+```{r}
+res.pca$var$coord # visualisation des coordonnées
+```
+```{r}
+res.pca$var$cos2  # visualisation du cos2
+```
+```{r}
+fviz_pca_var(res.pca, col.var="cos2") +
+  scale_color_gradient2(low="white", mid="blue", 
+                        high="red", midpoint=0.6) + 
+  theme_minimal()
+#légende :
+#sport=je pratique du sport 
+#aliment=je fais attention à mon alimentation
+#sommeil=je.dors.au.moins.7.heures.par.jours.
+#stress=j'essaie toujours de gérer mon stress
+#fumer= je fume régulièrement des cigarettes
+#alcool = je bois régulièrement de l'alcool
+#santé= je fait attention à ma santé et je suis les recommandations médical
+#Smentale= je fais attention à ma santé mentale(je vois des amis et je pratique des activité qui me font du bien)
+#bouger= j'essaie de me déplacer à pied
+#peser= je me pese regulierement pour faire attention à mon poid
+```
+
+
+### interprétation variable-axe:
+-smentale, aliment et santé sont corrélé positivement  au premier axe, avec des cos2 respectivement égale à (0.54782911,0.68809571,0.67296619)
+on pourrait appeler cet axe équlibre de vie
+
+-alcool est corrélé positivement au deuxième axe , avec un cos2 égale à 0.66, on pourrait donc appelé cet axe alcool
+
+### interprétation variable-variable:
+
+-alcool et fumer sont positivement corrélé , ce qui signifie plus un undividu fume plus il est susceptible de boire .
+
+-smentale, aliment et santé sont corrélé positivement eux à deux ce qui signifie que plus un individu fait attention a sa santé , plus il fait attention a sa santé mentale et plus il fait attention à son alimentation .
+
+-age et poids sont corrélé positivement, ce qui signifie que plus un individu est agée plus il est susceptible d'avoir un poids important.
+
+-bouger et sport sont corrélé positivement , ce qui signifie que plus un individu fait du sport et plus il favorise le déplacement à pied
+
+-âge et poids sont corrélés négativement à bouger et sport , ce qui signifie que plus un individu est agée et a un poids important et  moins il est susceptible à faire du sport et à favoriser le deplacement à pied 
+
+## 2)5)Interprétation de la carte des individus
+```{r}
+
+fviz_pca_ind(res.pca,geom = "text",col.ind="cos2")+
+scale_color_gradient2(low="blue", mid="white", 
+                      high="red", midpoint=0.5)
+
+
+```
+
+On distingue dans ce plan factoriel les groupes suivants :
+
+les groupes qui ont un bon équilibre de vie et qui ne boivent pas de l'alcool (comme l'individu 24)
+les groupes qui ont un mauvais équilibre de vie et qui ne boivent pas d'alcool (comme l'individu 53)
+
+les groupes qui ont un mauvais équilibre de vie et qui  boivent de  l'alcool (comme l'individu 18)
+
+on distingue aussi quelques individus exceptionnels comme:
+-l'individu 17 qui bois de l'alcool de manière modéré et qui a un bon équilibre de vie
+
+###variable qualitative supplémentaire(sexe):
+
+```{r}
+plot.PCA(res.pca, axes=c(1, 2), choix="ind", habillage=11, cex=0.7)
+```
+
+Homme a une coordonnée plus élevé sur l'axe 1 et 2 que la femme:
+ce qui signifie qu'en général l'homme bois de l'alcool plus que la femme et que l'homme a un équilibre de vie mieux que la femme.
+
+## 3)ACP sur le bloc alimentation
+## 3)1)Intêret de l'acp:
+Etude des individus  : deux individus sont proches s’ils ont une alimentation similaires. On s’intéresse à la variabilité entre individus. Y a-t-il des similarités entre les individus pour toutes les variables ? Peut-on établir des profils d’individu ? Peut-on opposer un groupe d’individus à un autre ?
+
+
+Etude des variables : on étudie les liaisons linéaires entre les variables. Les objectifs sont de résumer la matrice des corrélations et de chercher des variables synthétiques: peut-on résumer l'alimentation des individus  par un petit nombre de variables ?
+
+Lien entre les deux études : peut-on caractériser des groupes d’individus par des variables ?
+
+## 3)2)Pertinence de l'acp
+```{r}
+
+library(corrplot)
+X=as.matrix(data[,c(11:20)])
+M<-cor(X)
+library(RColorBrewer)
+corrplot(M, type="upper", order="hclust", col=brewer.pal(n=8, name="RdBu"))
+
+
+```
+
+
+les variables sont significativement corrélées , notre ACP est donc pertinente.
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+
+res.pca2=PCA(data[,c(11:20,32:35)],ncp = 5,quanti.sup = 12:14,quali.sup=11,graph=F) #sexe, age, poids et taille sont des variables supplémentaires
+
+```
+## 3)3)Choix du nombre d'axe
+```{r}
+head(res.pca2$eig)
+```
+```{r}
+fviz_screeplot(res.pca2, ncp=10)
+```
+
+
+a) Critère de kaiser : on remarque qu’il y a 3 axes dont les valeurs propres sont supérieures à 1 donc on retient 3 axes d’après ce critère.
+
+b) Critère du taux d’inertie cumulée : On remarque que le taux d’inertie cumulé des 2 premiers axes est de 56.4% qui est un taux important compte tenu du fait que nous avons 10 variables : on va donc, d’après ce critère, retenir les 2 premiers axes.
+
+c) Critère du coude : On remarque que le coude se trouve au niveau du troisième axe (voir la figure Scree plot), d’après ce critère, on peut  retenir les 2 premiers axes.
+
+Conclusion:En faisant une sorte de vote des 3 critères on devrait retenir les 2 premiers axes.
+
+## 3)4)Interprétation de la carte des variables
+```{r}
+res.pca2$var$coord # visualisation des coordonnées
+```
+
+```{r}
+res.pca2$var$cos2  # visualisation du cos2
+```
+```{r}
+fviz_pca_var(res.pca2, col.var="cos2") +
+  scale_color_gradient2(low="white", mid="blue", 
+                        high="red", midpoint=0.6) + 
+  theme_minimal()
+#légende :
+#fg=je consomme des fruits et des légumes
+#proteine=je consomme une bonne variété de sources de protéine
+#sucre=je limite ma consommation de sucre ajouté
+#complet=je privilège les aliments complet(farine complète , pattes complète) 
+#hydrater= je m'hydrate bien
+#grigns = j'ai tendance à grignoter le soir
+#fastF= j'ai tendance à manger des fast-food
+#informéA= je suis bien informé sur les choix alimentaires sains 
+#grignR= je grignote entre les repas
+#stressF= j'utilise souvent la nourriture pour gérer le stress ou les émotions 
+```
+
+### interprétation variable-axe:
+-le premier axe est positivement corrélé à hydrater, proteine,fg,informéA
+avec de cos2 respectivement égales à(0.58,0.61,0.74,0.68). On pourrait appeler cete axe alimentation responsable
+
+-le deuxieme axe est positivement corrélé à grignS,fastF,grignR,stressF avec des cos2 respectivement égale à(0.60,0.53,0.60,0.54) .On pourrait appeler cette axe comportement de grignotage
+
+### interprétation variable-variable:
+-les variables hydrater, proteine,fg,informéA,sucre sont positivement  corrélés entre eux , ce qui signifie que plus un individu est informé sur les choix des alimentations saines plus il s'alimente de proteine , de fruits , de legume et pus il lmite sa consommation de sucres ajoutés
+
+
+- les variables grignS,fastF,grignR,stressF sont positivement corrélés entre eux , ce qui signifie que plus un individu grignote entre les repas ou le soir, plus il a tendance a  manger des fastFood et gerer le stress par la nourriture .
+
+## 3)5)Interprétation de la carte des individus
+```{r}
+
+fviz_pca_ind(res.pca2,geom = "text",col.ind="cos2")+
+scale_color_gradient2(low="blue", mid="white", 
+                      high="red", midpoint=0.5)
+
+
+```
+
+
+On distingue dans ce plan factoriel les groupes suivants :
+
+-le groupe d'individus qui ont une alimentation équilibré et qui n'ont pas un comportement de grignotage comme l'individu 66.
+
+-le groupe d'individus qui ont une alimentation pas équilibré et qui n'ont pas un comportement de grignotage comme l'individu 12.
+
+
+
+-le groupe d'individus qui ont une alimentation pas équilibré et qui ont  un comportement de grignotage comme l'individu 28.
+
+-on peut aussi distinguer des individus qui sortent du lot comme l'individu 14 qui a une alimentation un peu équilibré et qui possède un  comportement de grignotage. 
+
+
+###variable qualitative supplémentaire(sexe):
+
+```{r}
+plot.PCA(res.pca2, axes=c(1, 2), choix="ind", habillage=11, cex=0.7)
+```
+
+On remarque que l'homme a une coordonnée plus forte que la femme sur l'axe 1 et 2. Ce qui signifie qu'en moyenne l'homme a une alimentation plus équilibré et est plus susceptible d'avoir un comportement de grignotage
+## 4)ACM sur le bloc oui ou non 
+## 4)1)interet de l'ACM
+
+y-a-t-il dépendance entre les différentes variables ´
+Si oui quels types d’associations existent entre ces
+variables ?
+Peut-on regrouper des individus et les caractériser par des variables.
+
+## 4) ACM
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+library(FactoInvestigate)
+dataACM=data[,c(21:31)]
+head(dataACM)
+```
+
+
+```{r}
+summary(dataACM)
+
+```
+## 4)2)Choix du nombre d'axe
+
+```{r}
+res.mca = MCA (dataACM, graph = FALSE)
+res.mca$eig
+```
+```{r}
+fviz_screeplot(res.mca)
+```
+
+a) Le critère du coude nous donne le choix de deux axes(le coude est situé aux deuxième axe).
+b) le critère du taux d'inertie cumulé nous permettent de choisir les 4 axes avec un taux cumulé de 45% ce qui n'est pas mal pour 11 variables
+c) le critère de la moyenne noux permettent de choisir les axes avec les valeurs propres qui sont supérieur à 1/11=0.09 et on a donc 7 axes
+
+Conclusion: on choisit le nombre d'axe qui est presque égale a la moyenne des nombres d'axes des trois critères et qui est égale à 4 axes.
+
+# Nous avons 12 cartes à interpreter(6 cartes des modalités et 6 cartes des individus)
+## 4)3)Interprétation de la première carte des modalités(axe 1 et 2)
+```{r}
+fviz_mca_var(res.mca, axes=c(1,2),select.var = list(cos2 = 0.4))
+#légende:
+#Tg=souffrez vous d'un taux de glycémie assez élevé?
+#OE=Avez-vous déjà eu une opération sur l'estomac?
+#OV=Avez vous déjà été opéré sur l'un de vos organes vitaux?
+#Tc=Souffrez vous d'un taux de cholestérol assez élevé ?
+#Allergie=Avez vous des allergies?
+#Mchron =Souffrez-vous d’une maladie chronique?
+#SSPORT =Est-ce que vous avez une condition de santé qui vous empêche de pratiquer du sport?
+#FSpoids=avez vous quelqu'un de vos proches qui souffre d'un problème de surpoids?
+#fumer=est ce que vous fumez?
+#alcool=est-ce que vous buvez de l'alcool?
+#surpoids=avez vous eu des problèmes de surpoids?
+```
+
+On constate qu'il ya un lien entre le fait d'avoir un problème de surpoids et le fait de souffrir  d'un taux de cholesterol assez élevé.
+il ya aussi un lien entre l'operation sur estomat et le fait d'avoir un proches qui souffre d'un poblème de surpoids.
+on remarque un autre lien entre surpoid_non ,Operation estomac non et taux de cholesterol non.
+Le premiere axe oppose  (surpoid_non ,Operation estomac non et taux de cholesterol_non )à (surpoid_oui ,Operation estomac oui et taux de cholesterol_oui et avoir un proche qui a des problème de surpoids)
+## 4)4)Interprétation de la première carte des individus(axe 1 et 2)
+
+```{r}
+fviz_mca_biplot(res.mca,axes = c(1,2),
+               select.ind = list(contrib = 30),
+               invisible ="var",repel = TRUE, 
+              ggtheme = theme_minimal ())
+```
+
+A l'aide de cette carte on peut distinguer deux groupes :
+le premier groupe caractérisé par les modalités (surpoid_oui ,Operation estomac oui et taux de cholesterol_oui et avoir un proche qui a des problème de surpoids) et qui est opposé sur le premier axe au deuxième groupe qui est caractérisé par ces modalités(surpoid_non ,Operation estomac non et taux de cholesterol_non)
+
+## 4)5)Interprétation de la deuxième carte des modalités(axe 1 et 3)
+```{r}
+fviz_mca_var(res.mca, axes=c(1,3),select.var = list(cos2 = 0.4))
+#légende:
+#Tg=souffrez vous d'un taux de glycémie assez élevé?
+#OE=Avez-vous déjà eu une opération sur l'estomac?
+#OV=Avez vous déjà été opéré sur l'un de vos organes vitaux?
+#Tc=Souffrez vous d'un taux de cholestérol assez élevé ?
+#Allergie=Avez vous des allergies?
+#Mchron =Souffrez-vous d’une maladie chronique?
+#SSPORT =Est-ce que vous avez une condition de santé qui vous empêche de pratiquer du sport?
+#FSpoids=avez vous quelqu'un de vos proches qui souffre d'un problème de surpoids?
+#fumer=est ce que vous fumez?
+#alcool=est-ce que vous buvez de l'alcool?
+#surpoids=avez vous eu des problèmes de surpoids?
+
+```
+
+On remarque qu'il ya un lien assez fort entre le fait de ne pas fumer et de ne pas boire de l'alcool qui sont opposées sur le troisième axe à fumer_oui et a alcool_oui qui eux aussi possède un lien .
+
+## 4)6)Interprétation de la deuxième carte des individus(axe 1 et 3)
+
+```{r}
+fviz_mca_biplot(res.mca,axes = c(1,3),
+               select.ind = list(contrib = 30),
+               invisible ="var",repel = TRUE, 
+              ggtheme = theme_minimal ())
+```
+
+on peut constater deux  nouveaux groupes , ceux qui ne fume pas et ne boivent pas et qui ont un  probleme de surpoid(a droite de l'axe 1)
+et ceux qui  fume  et  boivent et qui n'ont pas de probleme de surpoid(a droite de l'axe 1)
+et on peut constater des indivdus spéciaux comme ceux qui fume et boivent et ont un probleme de surpoid et ceux qui  ne fument pas et ne boivent pas  et qui ont un probleme de surpoid.
+
+## 4)7)Interprétation de la troisième carte des modalités(axe 1 et 4)
+
+```{r}
+fviz_mca_var(res.mca, axes=c(1,4),select.var = list(cos2 = 0.4))
+#légende:
+#Tg=souffrez vous d'un taux de glycémie assez élevé?
+#OE=Avez-vous déjà eu une opération sur l'estomac?
+#OV=Avez vous déjà été opéré sur l'un de vos organes vitaux?
+#Tc=Souffrez vous d'un taux de cholestérol assez élevé ?
+#Allergie=Avez vous des allergies?
+#Mchron =Souffrez-vous d’une maladie chronique?
+#SSPORT =Est-ce que vous avez une condition de santé qui vous empêche de pratiquer du sport?
+#FSpoids=avez vous quelqu'un de vos proches qui souffre d'un problème de surpoids?
+#fumer=est ce que vous fumez?
+#alcool=est-ce que vous buvez de l'alcool?
+#surpoids=avez vous eu des problèmes de surpoids?
+```
+Cette carte donne deux nouvelles associations : surpoids_oui et Mchron_oui(lien entre le fait d'avoir un probleme de surpoid et le fait de souffrir d'une maladie chronique)
+surpoids_non et Mchron_non(lien entre le fait de ne pas avoir un probleme de surpoid et le fait de ne pas souffrir d'une maladie chronique))
+
+## 4)8)Interprétation de la troisième carte des individus(axe 1 et 4)
+
+```{r}
+fviz_mca_biplot(res.mca,axes = c(1,4),
+               select.ind = list(contrib = 30),
+               invisible ="var",repel = TRUE, 
+              ggtheme = theme_minimal ())
+```
+
+## 4)9)Interprétation de la quatrième carte des modalités(axe 2 et 3)
+
+```{r}
+fviz_mca_var(res.mca, axes=c(2,3),select.var = list(cos2 = 0.4))
+#légende:
+#Tg=souffrez vous d'un taux de glycémie assez élevé?
+#OE=Avez-vous déjà eu une opération sur l'estomac?
+#OV=Avez vous déjà été opéré sur l'un de vos organes vitaux?
+#Tc=Souffrez vous d'un taux de cholestérol assez élevé ?
+#Allergie=Avez vous des allergies?
+#Mchron =Souffrez-vous d’une maladie chronique?
+#SSPORT =Est-ce que vous avez une condition de santé qui vous empêche de pratiquer du sport?
+#FSpoids=avez vous quelqu'un de vos proches qui souffre d'un problème de surpoids?
+#fumer=est ce que vous fumez?
+#alcool=est-ce que vous buvez de l'alcool?
+#surpoids=avez vous eu des problèmes de surpoids?
+```
+
+Aucune autre nouvelle association est constaté
+
+## 4)10)Interprétation de la cinquième  carte des modalités(axe 2 et 4)
+
+```{r}
+fviz_mca_var(res.mca, axes=c(2,4),select.var = list(cos2 = 0.4))
+#légende:
+#Tg=souffrez vous d'un taux de glycémie assez élevé?
+#OE=Avez-vous déjà eu une opération sur l'estomac?
+#OV=Avez vous déjà été opéré sur l'un de vos organes vitaux?
+#Tc=Souffrez vous d'un taux de cholestérol assez élevé ?
+#Allergie=Avez vous des allergies?
+#Mchron =Souffrez-vous d’une maladie chronique?
+#SSPORT =Est-ce que vous avez une condition de santé qui vous empêche de pratiquer du sport?
+#FSpoids=avez vous quelqu'un de vos proches qui souffre d'un problème de surpoids?
+#fumer=est ce que vous fumez?
+#alcool=est-ce que vous buvez de l'alcool?
+#surpoids=avez vous eu des problèmes de surpoids?
+
+```
+On remarque une association entre Tg_non et Mchron_non(lien entre le fait de ne pas avoir un taux de glycémie assez élevé et le faite de ne pas souffrir d'une maladie chronique) qui sont opposé sur le prmiere axe à Tg_oui et Mchron_oui
+
+## 4)11)Interprétation de la cinquième carte des individus(axe 2 et 4)
+
+```{r}
+fviz_mca_biplot(res.mca,axes = c(2,4),
+               select.ind = list(contrib = 30),
+               invisible ="var",repel = TRUE, 
+              ggtheme = theme_minimal ())
+```
+
+## 4)12)Interprétation de la sixième  carte des modalités(axe 3 et 4)
+```{r}
+fviz_mca_var(res.mca, axes=c(3,4),select.var = list(cos2 = 0.4))
+#légende:
+#Tg=souffrez vous d'un taux de glycémie assez élevé?
+#OE=Avez-vous déjà eu une opération sur l'estomac?
+#OV=Avez vous déjà été opéré sur l'un de vos organes vitaux?
+#Tc=Souffrez vous d'un taux de cholestérol assez élevé ?
+#Allergie=Avez vous des allergies?
+#Mchron =Souffrez-vous d’une maladie chronique?
+#SSPORT =Est-ce que vous avez une condition de santé qui vous empêche de pratiquer du sport?
+#FSpoids=avez vous quelqu'un de vos proches qui souffre d'un problème de surpoids?
+#fumer=est ce que vous fumez?
+#alcool=est-ce que vous buvez de l'alcool?
+#surpoids=avez vous eu des problèmes de surpoids?
+```
+
+Aucune nouvelle association
+
+
+
+
+
+
+
